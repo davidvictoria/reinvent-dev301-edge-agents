@@ -40,7 +40,7 @@ cd e2e-demo && streamlit run streamlit_app.py
 
 ```bash
 # 1. Install Ollama and pull models
-ollama pull llama3.1
+ollama pull hoangquan456/qwen3-nothink:4b
 ollama pull nomic-embed-text
 ollama serve
 

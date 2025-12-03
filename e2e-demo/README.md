@@ -34,10 +34,8 @@ An AI-powered assistant for industrial equipment management built with the [Stra
 
 3. **Required Ollama Models**
    ```bash
-   # Pull the LLM model
-   ollama pull llama3.1
-   # Or use a smaller model for resource-constrained devices:
-   # ollama pull qwen3-nothink:4b
+   # Pull the LLM model (lightweight, optimized for edge)
+   ollama pull hoangquan456/qwen3-nothink:4b
    
    # Pull the embedding model
    ollama pull nomic-embed-text
@@ -211,11 +209,11 @@ ollama serve
 ### Model Not Found
 
 ```
-Error: Model 'llama3.1' not found
+Error: Model not found
 ```
 **Solution**: Pull the required model:
 ```bash
-ollama pull llama3.1
+ollama pull hoangquan456/qwen3-nothink:4b
 ```
 
 ### MCP SQLite Server Issues
