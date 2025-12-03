@@ -8,13 +8,10 @@ with controls for switching between local and cloud model modes.
 Requirements:
     - 8.1: Show slider/toggle control for selecting between Local and Cloud modes
     - 6.4: Provide coherent natural language response display
-    - 5.6: Support document indexing through file upload
 """
 
 import streamlit as st
 from pathlib import Path
-import tempfile
-import os
 import sys
 
 # Add the e2e-demo directory to path so we can import src as a package
@@ -39,9 +36,6 @@ def init_session_state():
     
     if "session_id" not in st.session_state:
         st.session_state.session_id = "edge-operator-001"
-    
-    if "indexed_documents" not in st.session_state:
-        st.session_state.indexed_documents = []
 
 
 def get_agent() -> EdgeOperatorAgent:
@@ -54,9 +48,7 @@ def get_agent() -> EdgeOperatorAgent:
         config = EdgeAgentConfig(
             session_id=st.session_state.session_id,
             sessions_dir="./edge_sessions",
-            db_path="./edge_telemetry.db",
-            vector_store_path="./edge_vector_store",
-            documents_dir="./edge_documents"
+            db_path="./edge_telemetry.db"
         )
         st.session_state.agent = EdgeOperatorAgent(config)
     
@@ -112,62 +104,23 @@ def render_sidebar():
         
         st.info(f"{mode_emoji} Current Mode: **{mode_label}**")
         
-        # Session info
-        st.markdown(f"📝 Session: `{st.session_state.session_id}`")
-        
+        # Session ID input
         st.markdown("---")
+        st.subheader("📝 Session")
         
-        # Document Management Section (Requirement 5.6)
-        render_document_management()
-
-
-def render_document_management():
-    """Render document management UI in sidebar.
-    
-    Requirements:
-        - 5.6: Support document indexing through file upload
-    """
-    st.subheader("📚 Documents")
-    
-    # File upload for document indexing
-    uploaded_file = st.file_uploader(
-        "Upload document to index",
-        type=["txt", "md", "pdf"],
-        help="Upload technical documents, manuals, or guides for semantic search"
-    )
-    
-    if uploaded_file is not None:
-        # Save uploaded file temporarily and index it
-        with tempfile.NamedTemporaryFile(
-            delete=False, 
-            suffix=Path(uploaded_file.name).suffix
-        ) as tmp_file:
-            tmp_file.write(uploaded_file.getvalue())
-            tmp_path = tmp_file.name
+        new_session_id = st.text_input(
+            "Session ID:",
+            value=st.session_state.session_id,
+            help="Change the session ID to switch between different conversation contexts"
+        )
         
-        try:
-            agent = get_agent()
-            result = agent.doc_search.index_document(tmp_path)
-            
-            if "Successfully" in result:
-                st.success(f"✅ Indexed: {uploaded_file.name}")
-                if uploaded_file.name not in st.session_state.indexed_documents:
-                    st.session_state.indexed_documents.append(uploaded_file.name)
-            else:
-                st.error(f"❌ {result}")
-        finally:
-            # Clean up temp file
-            os.unlink(tmp_path)
-    
-    # Display indexed documents list
-    if st.session_state.indexed_documents:
-        st.markdown("**Indexed Documents:**")
-        for doc in st.session_state.indexed_documents:
-            st.markdown(f"- 📄 {doc}")
-    else:
-        st.caption("No documents indexed yet")
-
-
+        # Handle session ID change
+        if new_session_id != st.session_state.session_id:
+            st.session_state.session_id = new_session_id
+            st.session_state.agent = None  # Force agent recreation with new session
+            st.session_state.messages = []  # Clear chat history for new session
+            st.rerun()
+        
 def stream_agent_response(agent: EdgeOperatorAgent, prompt: str):
     """Generator that yields text chunks from the agent's streaming response.
     
@@ -242,7 +195,7 @@ def render_chat_interface():
             st.markdown(content)
     
     # Chat input
-    if prompt := st.chat_input("Ask about sensors, equipment, or search documents..."):
+    if prompt := st.chat_input("Ask about sensors, equipment, or telemetry data..."):
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
         
@@ -254,11 +207,22 @@ def render_chat_interface():
         with st.chat_message("assistant"):
             agent = get_agent()
             
-            # Use st.write_stream for streaming response
-            response = st.write_stream(stream_agent_response(agent, prompt))
+            try:
+                # Use st.write_stream for streaming response
+                response = st.write_stream(stream_agent_response(agent, prompt))
+                if not response:
+                    # Fallback to non-streaming if streaming returns empty
+                    response = agent.chat(prompt)
+                    st.markdown(response)
+            except Exception as e:
+                # Fallback to non-streaming chat on error
+                with st.spinner("Processing..."):
+                    response = agent.chat(prompt)
+                st.markdown(response)
         
         # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        if response:
+            st.session_state.messages.append({"role": "assistant", "content": response})
 
 
 def main():

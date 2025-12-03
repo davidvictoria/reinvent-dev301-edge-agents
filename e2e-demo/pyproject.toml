@@ -8,11 +8,9 @@ dependencies = [
     "strands-agents[ollama]>=0.1.0",
     "strands-agents-tools>=0.1.0",
     "pydantic>=2.0.0",
-    "chromadb>=0.4.0",
     "streamlit>=1.30.0",
     "hypothesis>=6.0.0",
     "mcp>=1.0.0",
-    "PyPDF2>=3.0.0",
 ]
 
 [project.optional-dependencies]

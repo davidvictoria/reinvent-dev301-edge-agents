@@ -1,8 +1,7 @@
 """Edge Operator Agent - Main agent class integrating all capabilities.
 
 Provides a unified conversational interface combining IoT device control,
-structured data extraction, persistent sessions, local database access,
-and local document search capabilities.
+structured data extraction, persistent sessions, and local database access.
 """
 
 from typing import Optional, List, Any
@@ -14,7 +13,6 @@ from .config import EdgeAgentConfig
 from .model_router import ModelRouter
 from .session_manager import create_session_manager
 from .tools.iot_tools import read_sensor, control_device, list_devices
-from .tools.document_search_tools import DocumentSearchTools
 from .tools.database_tools import DatabaseTools
 from .tools.scada_extraction_tools import extract_scada_metrics
 
@@ -38,15 +36,10 @@ Your capabilities include:
    - Use query_telemetry to retrieve historical data with filters
    - Use query_telemetry_aggregation for statistical analysis (AVG, MIN, MAX, COUNT)
 
-4. **Document Search**: Search technical documentation and manuals locally
-   - Use search_documents to find relevant information in indexed documents
-   - Use index_document to add new documents to the search index
-
 When responding:
 - Be concise and clear in your explanations
 - Always confirm actions before executing device controls
 - Provide relevant context about device readings
-- Use document search to find troubleshooting procedures when needed
 - Log important telemetry data for historical analysis
 - Suggest next steps when appropriate
 
@@ -58,14 +51,12 @@ class EdgeOperatorAgent:
     """Unified edge operator agent combining all capabilities.
     
     Integrates IoT device control, structured data extraction, session persistence,
-    local database access, and document search into a single conversational 
-    interface for field operators.
+    and local database access into a single conversational interface for field operators.
     
     Attributes:
         config: Configuration for the agent
         model_router: Routes inference to local or cloud models
         session_manager: Manages conversation persistence
-        doc_search: Document search tools for local RAG
         db_tools: Database tools for telemetry storage via MCP
         
     Requirements:
@@ -97,13 +88,6 @@ class EdgeOperatorAgent:
             storage_dir=config.sessions_dir
         )
         
-        # Initialize document search tools for local RAG (Req 5.1, 5.2, 5.7)
-        self.doc_search = DocumentSearchTools(
-            storage_path=config.vector_store_path,
-            embedding_model=config.embedding_model,
-            ollama_host=config.ollama_config.get("host", "http://localhost:11434")
-        )
-        
         # Initialize database tools for telemetry storage via MCP (Req 4.1, 4.2)
         self.db_tools = DatabaseTools(db_path=config.db_path)
         
@@ -123,7 +107,6 @@ class EdgeOperatorAgent:
         Combines all tool categories:
         - IoT tools: read_sensor, control_device, list_devices
         - SCADA extraction: extract_scada_metrics
-        - Document search: search_documents, index_document
         - Database tools: log_telemetry, query_telemetry, query_telemetry_aggregation
         
         Returns:
@@ -141,9 +124,6 @@ class EdgeOperatorAgent:
             extract_scada_metrics,
         ]
         
-        # Add document search tools (Req 5.1, 5.2)
-        tools.extend(self.doc_search.get_tools())
-        
         # Add database tools (Req 4.1, 4.2, 4.3, 4.4)
         tools.extend(self.db_tools.get_tools())
         
@@ -153,8 +133,8 @@ class EdgeOperatorAgent:
         """Create or recreate the agent with current model and session.
         
         Creates a new Agent instance with the current model from the
-        model router, all available tools (IoT, database, document search,
-        SCADA extraction), and the session manager for conversation persistence.
+        model router, all available tools (IoT, database, SCADA extraction),
+        and the session manager for conversation persistence.
         
         Args:
             agent_id: Unique identifier for the agent within the session
@@ -165,7 +145,7 @@ class EdgeOperatorAgent:
         Requirements:
             - 3.1: Session manager persists state immediately
             - 3.2: Session manager restores history on agent creation
-            - 6.1: All tools (IoT, database, document search) initialized and available
+            - 6.1: All tools (IoT, database) initialized and available
             - 6.2: Agent determines appropriate tools based on intent
         """
         tools = self._get_tools()
@@ -204,7 +184,7 @@ class EdgeOperatorAgent:
         
         When the mode changes successfully, updates the agent's model
         while preserving the session and all local capabilities
-        (session persistence, database operations, document search).
+        (session persistence, database operations).
         
         Args:
             mode: Target mode ("local" or "cloud")
@@ -254,7 +234,7 @@ class EdgeOperatorAgent:
         
         The agent handles tool orchestration internally:
         - Analyzes the user's intent from the message
-        - Selects appropriate tools (IoT, database, document search, SCADA)
+        - Selects appropriate tools (IoT, database, SCADA)
         - Executes tools in sequence when multiple are needed
         - Synthesizes tool outputs into a coherent response
         

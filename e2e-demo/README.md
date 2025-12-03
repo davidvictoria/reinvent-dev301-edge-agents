@@ -1,6 +1,6 @@
 # Edge Operator Agent 🏭
 
-An AI-powered assistant for industrial equipment management built with the [Strands Agents SDK](https://github.com/strands-agents/strands-agents). The agent operates fully offline on edge devices, combining IoT device control, structured data extraction, persistent sessions, local database access, and local document search capabilities.
+An AI-powered assistant for industrial equipment management built with the [Strands Agents SDK](https://github.com/strands-agents/strands-agents). The agent operates fully offline on edge devices, combining IoT device control, structured data extraction, persistent sessions, and local database access.
 
 > **Demo project** showcasing Strands Agents SDK capabilities for edge/industrial scenarios with real-time streaming responses.
 
@@ -10,7 +10,6 @@ An AI-powered assistant for industrial equipment management built with the [Stra
 - **Structured Data Extraction**: Extract validated SCADA/MES data with Pydantic schemas
 - **Session Persistence**: Conversations persist across restarts using FileSessionManager
 - **Local Database**: Store and query telemetry data in SQLite via MCP
-- **Document Search (RAG)**: Semantic search of technical documentation using ChromaDB
 - **Dynamic Model Switching**: Toggle between local (Ollama) and cloud (Claude on Bedrock) models
 - **Real-time Streaming**: Responses stream in real-time for better UX
 
@@ -32,13 +31,10 @@ An AI-powered assistant for industrial equipment management built with the [Stra
    curl -fsSL https://ollama.com/install.sh | sh
    ```
 
-3. **Required Ollama Models**
+3. **Required Ollama Model**
    ```bash
    # Pull the LLM model (lightweight, optimized for edge)
    ollama pull hoangquan456/qwen3-nothink:4b
-   
-   # Pull the embedding model
-   ollama pull nomic-embed-text
    ```
 
 4. **UV Package Manager** (for MCP SQLite server)
@@ -90,7 +86,6 @@ streamlit run streamlit_app.py
 The web interface will open at `http://localhost:8501` with:
 - Chat interface for interacting with the agent
 - Model mode toggle (Local/Cloud) in the sidebar
-- Document upload for indexing technical manuals
 
 ### Command Line Interface
 
@@ -105,28 +100,18 @@ python -m src.edge_operator_agent
 e2e-demo/
 ├── src/
 │   ├── __init__.py
-│   ├── app.py                    # Streamlit app module
 │   ├── config.py                 # Configuration dataclass
 │   ├── edge_operator_agent.py    # Main agent class
 │   ├── model_router.py           # Local/Cloud model switching
 │   ├── session_manager.py        # Session persistence
 │   ├── models/
 │   │   ├── device_registry.py    # IoT device definitions
-│   │   ├── document_chunk.py     # Document chunk model
 │   │   ├── iot_devices.py        # IoT device dataclasses
 │   │   └── scada_models.py       # SCADA/MES Pydantic models
-│   ├── storage/
-│   │   └── __init__.py
 │   └── tools/
 │       ├── database_tools.py     # MCP SQLite tools
-│       ├── document_search_tools.py  # ChromaDB RAG tools
 │       ├── iot_tools.py          # Sensor/actuator tools
 │       └── scada_extraction_tools.py # Structured extraction
-├── documents/                    # Sample technical documents
-│   ├── conveyor_belt_manual.md
-│   ├── packaging_unit_manual.md
-│   ├── safety_procedures.md
-│   └── troubleshooting_guide.md
 ├── tests/
 │   └── test_session_manager.py
 ├── pyproject.toml
@@ -144,16 +129,11 @@ class EdgeAgentConfig:
     session_id: str                           # Unique session identifier
     sessions_dir: str = "./sessions"          # Session storage path
     db_path: str = "./telemetry.db"          # SQLite database path
-    vector_store_path: str = "./vector_store" # ChromaDB storage path
-    documents_dir: str = "./documents"        # Source documents path
-    embedding_model: str = "nomic-embed-text" # Ollama embedding model
     ollama_config: dict = ...                 # Ollama model settings
     bedrock_config: dict = ...                # AWS Bedrock settings
 ```
 
 ## Demo Interactions
-
-See [DEMO_SCRIPT.md](./DEMO_SCRIPT.md) for detailed example interactions demonstrating each capability.
 
 ### Quick Examples
 
@@ -180,14 +160,7 @@ Agent: Sending command to valve-actuator-001...
 Valve actuator set to OPEN state. Previous state was CLOSED.
 ```
 
-**4. Search Documentation**
-```
-User: How do I troubleshoot a belt tracking issue?
-Agent: Based on the equipment documentation:
-[Returns relevant sections from conveyor_belt_manual.md]
-```
-
-**5. Query Telemetry Data**
+**4. Query Telemetry Data**
 ```
 User: Show me the average temperature readings from today
 Agent: Querying telemetry database...
@@ -246,21 +219,6 @@ cd e2e-demo
 pytest tests/ -v
 ```
 
-### Property-Based Tests
-
-The project uses Hypothesis for property-based testing:
-```bash
-pytest tests/ -v -k "property"
-```
-
 ## License
 
 MIT License - See LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests
-5. Submit a pull request

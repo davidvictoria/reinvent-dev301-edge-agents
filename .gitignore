@@ -38,10 +38,7 @@ ENV/
 
 # Project specific
 edge_sessions/
-edge_vector_store/
-edge_documents/
 *.db
-chroma_db/
 
 # Pytest
 .pytest_cache/

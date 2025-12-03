@@ -20,7 +20,6 @@ Step-by-step demos covering core Strands SDK features:
 Full-featured Streamlit application demonstrating a production-ready edge agent:
 
 - **IoT Control**: Read sensors, control actuators via natural language
-- **Document Search (RAG)**: Semantic search with ChromaDB + Ollama embeddings
 - **Telemetry Database**: SQLite storage via MCP protocol
 - **Model Switching**: Toggle local (Ollama) ↔ cloud (Bedrock) at runtime
 - **Streaming Responses**: Real-time response streaming in the UI
@@ -39,13 +38,12 @@ cd e2e-demo && streamlit run streamlit_app.py
 ### Setup
 
 ```bash
-# 1. Install Ollama and pull models
+# 1. Install Ollama and pull model
 ollama pull hoangquan456/qwen3-nothink:4b
-ollama pull nomic-embed-text
 ollama serve
 
 # 2. Install dependencies
-pip install 'strands-agents[ollama]' strands-agents-tools pydantic mcp hypothesis chromadb streamlit
+pip install 'strands-agents[ollama]' strands-agents-tools pydantic mcp hypothesis streamlit
 pip install uv  # Required for MCP SQLite server
 
 # 3. Run the notebook demos
@@ -68,7 +66,6 @@ cd e2e-demo && pip install -e . && streamlit run streamlit_app.py
 │  ├── Session Manager (FileSessionManager)                   │
 │  └── Tools:                                                 │
 │      ├── IoT Tools (sensors, actuators)                    │
-│      ├── Document Search (ChromaDB + embeddings)           │
 │      ├── Database Tools (SQLite via MCP)                   │
 │      └── SCADA Extraction (Pydantic structured output)     │
 └─────────────────────────────────────────────────────────────┘
